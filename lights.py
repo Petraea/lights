@@ -63,9 +63,9 @@ def prettyprint(val):
         ret=[]
         for x in val:
            ret.append(prettyprint(x)+':'+prettyprint(val[x]))
-        return '{'+','.join(sorted(ret))+'}'
+        return '{'+','.join(sorted(ret,key=lambda x: float(x.split(':')[0])))+'}'
     elif isinstance(val,list):
-       return '['+ ','.join(sorted(prettyprint(x)))+']'
+       return '['+ ','.join(sorted(prettyprint(x),key=float))+']'
     elif isinstance(val,str):
        return val
     else:

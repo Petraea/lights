@@ -58,6 +58,20 @@ def executeLB(command,s=None):
     except:
         return ret
 
+def prettyprint(val):
+    if isinstance(val,dict):
+        ret=[]
+        for x in val:
+           ret.append(prettyprint(x)+':'+prettyprint(val[x]))
+        return '{'+','.join(ret)+'}'
+    elif isinstance(val,list):
+       return '['+ ','.join(prettyprint(x))+']'
+    elif isinstance(val,str):
+       return val
+    else:
+       return str(val)
+       
+
 def token_parse(input, separator=',',equator='='):
     '''parses a string with multiple tokens assigned to values e.g. a=3,b,c=4
     into {'a':'3','b':'4','c':'4'}. with ',' as the token separator and '=' as the token equator.
@@ -185,7 +199,7 @@ def handle_lightdata_del(bot, ievent):
     ievent.reply(lightname + " removed")
 
 def handle_list_lightdata(bot, ievent):
-    ievent.reply(str(light_data.data.items()))
+    ievent.reply(prettyprint(light_data.data.items()))
 
 cmnds.add('lightdata-add', handle_lightdata_add, ['SPACE'], threaded=True)
 cmnds.add('lightdata-del', handle_lightdata_del, ['SPACE'], threaded=True)
@@ -239,7 +253,7 @@ def handle_lightprofile_del(bot, ievent):
 def handle_list_lightprofiles(bot, ievent):
     """ Show the list of profile names."""
 #    ievent.reply(str(light_profiles.data.keys()))
-    ievent.reply(str(executeLB({'method':'getScenes'})))
+    ievent.reply(prettyprint(executeLB({'method':'getScenes'})))
 
 def handle_show_lightprofile(bot, ievent):
     """ Show the assignment of a profile."""
@@ -249,7 +263,7 @@ def handle_show_lightprofile(bot, ievent):
         pdata = executeLB({'method':'getScene','params':[profile]})
 #        pdata = light_profiles.data[profile]
     except: ievent.reply("no such profile") ; return
-    ievent.reply(str(pdata))
+    ievent.reply(prettyprint(pdata))
 
 #def lightprofile_activate(profile, amount=100):
 #    '''Activates a profile.'''
@@ -306,7 +320,7 @@ def handle_fluoro(bot, ievent):
     except:
         #look up values
         ldict = executeLB({'method':'getChannels','params':[range(FLUORO['channel'],FLUORO['channel']+FLUORO['channels'])]})
-        ievent.reply('Current Fluorescent Settings: '+str(ldict))
+        ievent.reply('Current Fluorescent Settings: '+prettyprint(ldict))
         return
     try:
         c = int(splitted_input[0])+FLUORO['channel']
@@ -314,7 +328,7 @@ def handle_fluoro(bot, ievent):
     except: 
         ievent.reply("Invalid entry.") ; return
     ldict = executeLB({'method':'toggleChannel','params':[c]})
-    ievent.reply("Toggling " + str(c)+" to "+str(ldict))
+    ievent.reply("Toggling " + prettyprint(c)+" to "+prettyprint(ldict))
 
 def handle_multichanset(bot, ievent):
     """ Set or view multiple DMX channels. """
@@ -335,10 +349,10 @@ def handle_multichanset(bot, ievent):
         ievent.reply('Syntax error.') ; return
     if len(ldict)>0:
         values = executeLB({'method':'setChannels','params':[ldict]})
-        ievent.reply("Setting " + str(values))
+        ievent.reply("Setting " + prettyprint(values))
     if len(lookupdict)>0:
         lval = executeLB({'method':'getChannels','params':[lookupdict]})
-        ievent.reply(str(lval))
+        ievent.reply(prettyprint(lval))
 
 def handle_flash(bot, ievent):
 #    if currentstatus.data:

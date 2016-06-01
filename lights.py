@@ -125,6 +125,7 @@ def lightdata_lookup(token,assign,separator='-'):
 
 def crossfade(todict, time = 0.5, layer = 1):
     '''Sets up a crossfade between current light values and the recieved dictionary.'''
+    executeLB({'method':'layerSetEditRunMode','params':[layer,True]}) #Make sure layer isn in edit mode
     #get the current light values
     fromdict = executeLB({'method':'getChannels','params':[todict]})
     logging.warn(fromdict)
@@ -204,7 +205,7 @@ def handle_lightprofile_add(bot, ievent):
         ievent.reply('Parse error.') ; return
     try:
         for token in tdict:
-            if int(tdict[token])<0:
+            if int(tdict[token])<0 or int(tdict[token])>255:
                 ievent.reply('You must assign appropriate values to channels.') ; return
             else:
                 ldict.update(lightdata_lookup(token, tdict[token]))
@@ -212,74 +213,81 @@ def handle_lightprofile_add(bot, ievent):
         ievent.reply('Syntax error.') ; return
 
     ievent.reply('Saving: '+profile+': '+str(ldict))
-    light_profiles.data[profile.lower()] = ldict
-    light_profiles.save()
+    executeLB({'method':'setScene','params':[profile.lower(),ldict]})
+#    light_profiles.data[profile.lower()] = ldict
+#    light_profiles.save()
 
 def handle_lightprofile_save(bot, ievent):
     if not ievent.rest: ievent.missing('<profile name>') ; return
     profile = ievent.rest.split()[0]
     values = executeLB({'method':'getChannels'})#Save everything
     ievent.reply('Saving: '+profile+': '+str(ldict))
-    light_profiles.data[profile.lower()] = values
-    light_profiles.save()
+    executeLB({'method':'setScene','params':[profile.lower(),ldict]})
+#    light_profiles.data[profile.lower()] = values
+#    light_profiles.save()
 
 def handle_lightprofile_del(bot, ievent):
     if not ievent.rest: ievent.missing('<profile name>') ; return
     profile = ievent.rest.split()[0]
-    try:
-        del light_profiles.data[profile]
-        light_profiles.save()
-    except: ievent.reply("no such profile") ; return
+    executeLB({'method':'setScene','params':[profile.lower(),{}]})
+#    try:
+#        del light_profiles.data[profile]
+#        light_profiles.save()
+#    except: ievent.reply("no such profile") ; return
     ievent.reply(profile + " removed")
 
 def handle_list_lightprofiles(bot, ievent):
     """ Show the list of profile names."""
-    ievent.reply(str(light_profiles.data.keys()))
+#    ievent.reply(str(light_profiles.data.keys()))
+    ievent.reply(str(executeLB({'method':'getScenes'})))
 
 def handle_show_lightprofile(bot, ievent):
     """ Show the assignment of a profile."""
     if not ievent.rest: ievent.missing('<profile name>') ; return
     profile = ievent.rest.split()[0]
     try:
-        pdata = light_profiles.data[profile]
+        pdata = executeLB({'method':'getScene','params':[profile]})
+#        pdata = light_profiles.data[profile]
     except: ievent.reply("no such profile") ; return
     ievent.reply(str(pdata))
 
-def lightprofile_activate(profile, amount=100):
-    '''Activates a profile.'''
-    logging.warn('Activating profile: %s'%profile)
-    global light_profiles
-    pdata = light_profiles.data[profile]
-    if amount <100:
-        ldata = executeLB({'method':'getChannels'})
-    else:
-        ldata = pdata
-    ldict = {}
-    for x,y in pdata.items():
-        if x in ldata.keys():
-            y = int(y*amount/100+ldata[x]*(100-amount)/100)
-        ldict[str(x)]=y
-    crossfade(ldict, 3)
-    return
+#def lightprofile_activate(profile, amount=100):
+#    '''Activates a profile.'''
+#    logging.warn('Activating profile: %s'%profile)
+#    global light_profiles
+#    pdata = light_profiles.data[profile]
+#    if amount <100:
+#        ldata = executeLB({'method':'getChannels'})
+#    else:
+#        ldata = pdata
+#    ldict = {}
+#    for x,y in pdata.items():
+#        if x in ldata.keys():
+#            y = int(y*amount/100+ldata[x]*(100-amount)/100)
+#        ldict[str(x)]=y
+#    crossfade(ldict, 3)
+#    return
 
 def handle_lightprofile_activate(bot, ievent):
     """ Handles activating a profile."""
-    if not ievent.rest: ievent.missing('<profile name> (<amount>)') ; return
+#    if not ievent.rest: ievent.missing('<profile name> (<amount>)') ; return
+    if not ievent.rest: ievent.missing('<profile name>') ; return
     splitted = ievent.rest.split()
     profile = splitted[0]
-    try:
-        amount = float(splitted[1])
-        if amount >100: amount = 100
-        if amount <0: amount = 0
-    except:
-        amount = 100
-    if profile not in light_profiles.data.keys():
-        ievent.reply(profile+' not recognised!') ;return
-    lightprofile_activate(profile.lower(), amount)
-    if amount <100:
-        ievent.reply('Activated profile: '+profile+ ' at '+str(amount)+'%')
-    else:
-        ievent.reply('Activated profile: '+profile)
+#    try:
+#        amount = float(splitted[1])
+#        if amount >100: amount = 100
+#        if amount <0: amount = 0
+#    except:
+#        amount = 100
+#    if profile not in light_profiles.data.keys():
+#        ievent.reply(profile+' not recognised!') ;return
+    executeLB({'method':'faceToScene','params':[profile,3]})
+#    lightprofile_activate(profile.lower(), amount)
+#    if amount <100:
+#        ievent.reply('Activated profile: '+profile+ ' at '+str(amount)+'%')
+#    else:
+    ievent.reply('Activated profile: '+profile)
 
 cmnds.add('lightprofile-add', handle_lightprofile_add, ['SPACE'], threaded=True)
 cmnds.add('lightprofile-save', handle_lightprofile_save, ['SPACE'], threaded=True)
@@ -301,8 +309,8 @@ def handle_fluoro(bot, ievent):
         ievent.reply('Current Fluorescent Settings: '+str(ldict))
         return
     try:
-        c = int(splitted_input[0])+FLUORO['channel']-1
-        if c<FLUORO['channel'] or c>=(FLUORO['channel']+FLUORO['channels']): raise ValueError
+        c = int(splitted_input[0])+FLUORO['channel']
+        if c<FLUORO['channel'] or c>(FLUORO['channel']+FLUORO['channels']): raise ValueError
     except: 
         ievent.reply("Invalid entry.") ; return
     ldict = executeLB({'method':'toggleChannel','params':[c]})

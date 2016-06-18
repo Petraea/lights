@@ -311,7 +311,7 @@ cmnds.add('lightprofile-show', handle_show_lightprofile, ['SPACE'], threaded=Tru
 cmnds.add('lightprofile', handle_lightprofile_activate, ['SPACE'], threaded=True)
 
 #TODO
-FLUORO={'channel':8,'channels':4}
+FLUORO={'channel':241,'channels':4}
 def handle_fluoro(bot, ievent):
     """  """
     try:

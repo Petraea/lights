@@ -65,7 +65,7 @@ def prettyprint(val):
            ret.append(prettyprint(x)+':'+prettyprint(val[x]))
         return '{'+','.join(sorted(ret,key=lambda x: float(x.split(':')[0])))+'}'
     elif isinstance(val,list):
-       return '['+ ','.join(sorted(prettyprint(x),key=float))+']'
+       return '['+ ','.join(sorted([prettyprint(x) for x in val]))+']'
     elif isinstance(val,str):
        return val
     else:
@@ -264,23 +264,7 @@ def handle_show_lightprofile(bot, ievent):
 #        pdata = light_profiles.data[profile]
     except: ievent.reply("no such profile") ; return
     ievent.reply(prettyprint(pdata))
-
-#def lightprofile_activate(profile, amount=100):
-#    '''Activates a profile.'''
-#    logging.warn('Activating profile: %s'%profile)
-#    global light_profiles
-#    pdata = light_profiles.data[profile]
-#    if amount <100:
-#        ldata = executeLB({'method':'getChannels'})
-#    else:
-#        ldata = pdata
-#    ldict = {}
-#    for x,y in pdata.items():
-#        if x in ldata.keys():
-#            y = int(y*amount/100+ldata[x]*(100-amount)/100)
-#        ldict[str(x)]=y
-#    crossfade(ldict, 3)
-#    return
+#    ievent.reply(str(pdata))
 
 def handle_lightprofile_activate(bot, ievent):
     """ Handles activating a profile."""
@@ -296,7 +280,9 @@ def handle_lightprofile_activate(bot, ievent):
 #        amount = 100
 #    if profile not in light_profiles.data.keys():
 #        ievent.reply(profile+' not recognised!') ;return
-    executeLB({'method':'faceToScene','params':[profile,3]})
+    executeLB({'method':'fadeToScene','params':{'sceneName':profile,'time':3}})
+#    executeLB({'method':'fadeToScene','params':[profile,3]})
+
 #    lightprofile_activate(profile.lower(), amount)
 #    if amount <100:
 #        ievent.reply('Activated profile: '+profile+ ' at '+str(amount)+'%')
